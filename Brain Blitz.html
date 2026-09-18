@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Brain Blitz</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #F1E8D6;
+    --paper-2: #E7DBC2;
+    --ink: #23283A;
+    --ink-soft: #5B5F72;
+    --line: #cdbfa0;
+    --brass: #A8791F;
+    --brass-deep: #8A6417;
+    --pine: #2E5C4C;
+    --pine-deep: #234A3D;
+    --clay: #9C4A2E;
+    --clay-deep: #7C3A22;
+    --card-shadow: rgba(35,40,58,0.14);
+    --focus: #2E5C4C;
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme: dark){
+      --paper: #171B27;
+      --paper-2: #1F2433;
+      --ink: #EDE6D3;
+      --ink-soft: #A9AEC2;
+      --line: #3A3F52;
+      --brass: #D6A83E;
+      --brass-deep: #E8C066;
+      --pine: #6FBE9E;
+      --pine-deep: #8FD6B7;
+      --clay: #E08862;
+      --clay-deep: #EDA483;
+      --card-shadow: rgba(0,0,0,0.45);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper: #171B27;
+    --paper-2: #1F2433;
+    --ink: #EDE6D3;
+    --ink-soft: #A9AEC2;
+    --line: #3A3F52;
+    --brass: #D6A83E;
+    --brass-deep: #E8C066;
+    --pine: #6FBE9E;
+    --pine-deep: #8FD6B7;
+    --clay: #E08862;
+    --clay-deep: #EDA483;
+    --card-shadow: rgba(0,0,0,0.45);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    min-height:100vh;
+    background-image:
+      radial-gradient(circle at 15% 20%, color-mix(in srgb, var(--line) 35%, transparent) 0, transparent 45%),
+      radial-gradient(circle at 85% 75%, color-mix(in srgb, var(--line) 30%, transparent) 0, transparent 40%);
+    -webkit-font-smoothing:antialiased;
+  }
+  .contours{
+    position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.35;
+  }
+  .contours svg{width:100%; height:100%;}
+
+  .wrap{
+    position:relative; z-index:1;
+    min-height:100vh;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding: 40px 18px 60px;
+  }
+  .card{
+    width:100%; max-width:640px;
+    background: var(--paper-2);
+    border:1px solid var(--line);
+    border-radius:18px;
+    box-shadow: 0 18px 40px var(--card-shadow);
+    overflow:hidden;
+  }
+
+  header.top{
+    padding: 30px 32px 20px;
+    border-bottom:1px solid var(--line);
+    text-align:center;
+  }
+  .mark{
+    font-size:28px; line-height:1; margin-bottom:10px;
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: clamp(28px, 5vw, 36px);
+    margin:0 0 6px;
+    letter-spacing:-0.01em;
+  }
+  .sub{
+    color: var(--ink-soft);
+    font-size:15px;
+    max-width:44ch;
+    margin:0 auto;
+    line-height:1.5;
+  }
+
+  main{ padding: 26px 32px 32px; }
+
+  /* ---------- Level select ---------- */
+  .levels{
+    display:grid; gap:14px; margin-top:6px;
+  }
+  .level-btn{
+    display:flex; align-items:center; gap:16px;
+    text-align:left;
+    width:100%;
+    background:transparent;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px 18px;
+    cursor:pointer;
+    font-family:inherit;
+    color:var(--ink);
+    transition: transform .15s ease, border-color .15s ease, background-color .15s ease;
+  }
+  .level-btn:hover{ border-color: var(--brass); background: color-mix(in srgb, var(--brass) 8%, transparent); }
+  .level-btn:active{ transform: scale(0.99); }
+  .level-btn:focus-visible{ outline: 3px solid var(--focus); outline-offset:2px; }
+  .level-flag{
+    font-family:'Fraunces', serif; font-weight:700; font-size:20px;
+    width:46px; height:46px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .lvl-easy .level-flag{ background: color-mix(in srgb, var(--pine) 20%, transparent); color:var(--pine-deep); }
+  .lvl-medium .level-flag{ background: color-mix(in srgb, var(--brass) 22%, transparent); color:var(--brass-deep); }
+  .lvl-hard .level-flag{ background: color-mix(in srgb, var(--clay) 22%, transparent); color:var(--clay-deep); }
+  .level-name{ font-weight:700; font-size:16.5px; }
+  .level-desc{ color:var(--ink-soft); font-size:13.5px; margin-top:2px; }
+
+  .footnote{
+    margin-top:22px; font-size:12.5px; color:var(--ink-soft); text-align:center; line-height:1.6;
+  }
+
+  /* ---------- Quiz screen ---------- */
+  .quiz-head{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    margin-bottom:22px; flex-wrap:wrap;
+  }
+  .stopwatch{
+    font-family:'Fraunces', serif; font-variant-numeric: tabular-nums;
+    font-size:22px; font-weight:600;
+    display:flex; align-items:center; gap:8px;
+  }
+  .stopwatch .dot{ width:8px; height:8px; border-radius:50%; background:var(--clay); animation:pulse 1.4s infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.25;} }
+  .category-tag{
+    font-size:12.5px; font-weight:700;
+    padding:5px 11px; border-radius:999px;
+    letter-spacing:0.02em;
+  }
+  .tag-math{ background: color-mix(in srgb, var(--brass) 22%, transparent); color:var(--brass-deep); }
+  .tag-history{ background: color-mix(in srgb, var(--clay) 20%, transparent); color:var(--clay-deep); }
+  .tag-geography{ background: color-mix(in srgb, var(--pine) 20%, transparent); color:var(--pine-deep); }
+
+  .trail{
+    display:flex; gap:6px; margin-bottom:26px; flex-wrap:wrap;
+  }
+  .trail .stop{
+    width:26px; height:26px; border-radius:50%;
+    border:1.5px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700; color:var(--ink-soft);
+    flex-shrink:0;
+    transition: all .15s ease;
+  }
+  .trail .stop.current{ border-color:var(--brass); color:var(--brass-deep); background: color-mix(in srgb, var(--brass) 15%, transparent); }
+  .trail .stop.correct{ background:var(--pine); border-color:var(--pine); color:var(--paper-2); }
+  .trail .stop.wrong{ background:var(--clay); border-color:var(--clay); color:var(--paper-2); }
+
+  .q-count{ font-size:13px; color:var(--ink-soft); margin-bottom:8px; font-weight:600; }
+  .question{
+    font-family:'Fraunces', serif; font-weight:600;
+    font-size:23px; line-height:1.35; margin: 4px 0 24px;
+  }
+
+  .options{ display:grid; gap:11px; }
+  .opt{
+    text-align:left;
+    background:transparent;
+    border:1.5px solid var(--line);
+    border-radius:11px;
+    padding:14px 16px;
+    font-family:inherit; font-size:15.5px; color:var(--ink);
+    cursor:pointer;
+    display:flex; align-items:center; gap:12px;
+    transition: border-color .12s ease, background-color .12s ease;
+  }
+  .opt:hover:not(:disabled){ border-color:var(--brass); }
+  .opt:focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }
+  .opt-letter{
+    width:26px; height:26px; border-radius:7px; flex-shrink:0;
+    border:1.5px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    font-size:12.5px; font-weight:700; color:var(--ink-soft);
+  }
+  .opt:disabled{ cursor:default; }
+  .opt.correct{ border-color:var(--pine); background: color-mix(in srgb, var(--pine) 16%, transparent); }
+  .opt.correct .opt-letter{ background:var(--pine); border-color:var(--pine); color:var(--paper-2); }
+  .opt.wrong{ border-color:var(--clay); background: color-mix(in srgb, var(--clay) 14%, transparent); }
+  .opt.wrong .opt-letter{ background:var(--clay); border-color:var(--clay); color:var(--paper-2); }
+  .opt.dim{ opacity:0.45; }
+
+  .next-row{ margin-top:22px; display:flex; justify-content:flex-end; min-height:44px; }
+  .btn{
+    font-family:inherit; font-weight:700; font-size:14.5px;
+    padding:12px 22px; border-radius:10px; border:none; cursor:pointer;
+    background:var(--ink); color:var(--paper);
+    transition: transform .12s ease, opacity .12s ease;
+  }
+  .btn:hover{ transform: translateY(-1px); }
+  .btn:focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }
+  .btn.ghost{
+    background:transparent; color:var(--ink); border:1.5px solid var(--line);
+  }
+  .fade-in{ animation: fadeUp .28s ease both; }
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+
+  /* ---------- Results ---------- */
+  .result-hero{ text-align:center; padding: 6px 0 8px; }
+  .result-score{
+    font-family:'Fraunces', serif; font-weight:700;
+    font-size: 58px; line-height:1;
+  }
+  .result-label{ color:var(--ink-soft); font-size:14px; margin-top:6px; }
+  .stat-grid{
+    display:grid; grid-template-columns: repeat(3, 1fr); gap:12px;
+    margin: 26px 0 8px;
+  }
+  .stat{
+    border:1px solid var(--line); border-radius:12px; padding:14px 10px; text-align:center;
+  }
+  .stat-value{ font-family:'Fraunces', serif; font-weight:700; font-size:21px; }
+  .stat-key{ color:var(--ink-soft); font-size:12px; margin-top:3px; }
+  .breakdown{ margin-top:24px; }
+  .breakdown h3{ font-size:13px; text-transform:none; color:var(--ink-soft); margin:0 0 10px; font-weight:700; }
+  .bd-row{
+    display:flex; align-items:center; gap:10px; margin-bottom:9px; font-size:14px;
+  }
+  .bd-name{ width:96px; flex-shrink:0; font-weight:600; }
+  .bd-bar-track{ flex:1; height:8px; border-radius:99px; background:var(--paper); border:1px solid var(--line); overflow:hidden; }
+  .bd-bar-fill{ height:100%; border-radius:99px; }
+  .bd-fill-math{ background:var(--brass); }
+  .bd-fill-history{ background:var(--clay); }
+  .bd-fill-geography{ background:var(--pine); }
+  .bd-frac{ width:38px; text-align:right; color:var(--ink-soft); font-size:12.5px; flex-shrink:0; }
+
+  .result-actions{ display:flex; gap:10px; margin-top:28px; }
+  .result-actions .btn{ flex:1; }
+
+  @media (max-width:480px){
+    header.top{ padding:24px 20px 18px; }
+    main{ padding:20px 20px 26px; }
+    .question{ font-size:20px; }
+    .result-score{ font-size:46px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="contours" aria-hidden="true">
+  <svg viewBox="0 0 800 1200" preserveAspectRatio="xMidYMid slice">
+    <path d="M-50 150 Q 200 50 400 150 T 850 150" fill="none" stroke="currentColor" stroke-width="1"/>
+    <path d="M-50 250 Q 200 150 400 250 T 850 250" fill="none" stroke="currentColor" stroke-width="1"/>
+    <path d="M-50 950 Q 250 850 450 950 T 900 950" fill="none" stroke="currentColor" stroke-width="1"/>
+    <path d="M-50 1050 Q 250 950 450 1050 T 900 1050" fill="none" stroke="currentColor" stroke-width="1"/>
+    <path d="M-50 1150 Q 250 1050 450 1150 T 900 1150" fill="none" stroke="currentColor" stroke-width="1"/>
+  </svg>
+</div>
+
+<div class="wrap">
+  <div class="card" id="card" role="main"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============ DATA: history + geography banks ============ */
+  const BANK = {
+    easy: {
+      history: [
+        {q:"Who was the first President of the United States?", correct:"George Washington", wrong:["Thomas Jefferson","Abraham Lincoln","John Adams"]},
+        {q:"In which year did World War II end?", correct:"1945", wrong:["1939","1918","1950"]},
+        {q:"Which ancient civilization built the pyramids of Giza?", correct:"The Egyptians", wrong:["The Romans","The Greeks","The Aztecs"]},
+        {q:"Who was the first person to walk on the Moon?", correct:"Neil Armstrong", wrong:["Buzz Aldrin","Yuri Gagarin","John Glenn"]},
+        {q:"The Great Wall was built to defend which country?", correct:"China", wrong:["Japan","Mongolia","India"]},
+        {q:"Which empire was ruled by Julius Caesar?", correct:"The Roman Empire", wrong:["The Ottoman Empire","The Persian Empire","The British Empire"]},
+        {q:"In which year did the Titanic sink?", correct:"1912", wrong:["1905","1920","1931"]},
+        {q:"Which country gifted the Statue of Liberty to the USA?", correct:"France", wrong:["Spain","England","Italy"]},
+        {q:"The American Civil War was fought mainly over which issue?", correct:"Slavery", wrong:["Taxation","Trade routes","Land borders"]},
+        {q:"Who painted the ceiling of the Sistine Chapel?", correct:"Michelangelo", wrong:["Leonardo da Vinci","Raphael","Donatello"]},
+        {q:"Which explorer is credited with reaching the Americas in 1492?", correct:"Christopher Columbus", wrong:["Marco Polo","Ferdinand Magellan","Vasco da Gama"]},
+        {q:"What was the name of the ship the Pilgrims sailed to America on?", correct:"The Mayflower", wrong:["The Santa Maria","The Endeavour","The Beagle"]}
+      ],
+      geography: [
+        {q:"What is the largest continent by area?", correct:"Asia", wrong:["Africa","Europe","North America"]},
+        {q:"What is the capital of France?", correct:"Paris", wrong:["Lyon","Marseille","Nice"]},
+        {q:"Which ocean is the largest?", correct:"The Pacific Ocean", wrong:["The Atlantic Ocean","The Indian Ocean","The Arctic Ocean"]},
+        {q:"Mount Everest sits in which mountain range?", correct:"The Himalayas", wrong:["The Andes","The Alps","The Rockies"]},
+        {q:"What is the smallest continent by land area?", correct:"Australia", wrong:["Europe","Antarctica","South America"]},
+        {q:"The Sahara Desert is located on which continent?", correct:"Africa", wrong:["Asia","South America","Australia"]},
+        {q:"Which country is known as the Land of the Rising Sun?", correct:"Japan", wrong:["Thailand","South Korea","Vietnam"]},
+        {q:"What is the capital of Japan?", correct:"Tokyo", wrong:["Osaka","Kyoto","Seoul"]},
+        {q:"Which river flows through Egypt?", correct:"The Nile", wrong:["The Amazon","The Congo","The Ganges"]},
+        {q:"What is the largest country in the world by area?", correct:"Russia", wrong:["Canada","China","United States"]},
+        {q:"Which country has the shape often described as a boot?", correct:"Italy", wrong:["Spain","Greece","Portugal"]},
+        {q:"What is the capital of the United Kingdom?", correct:"London", wrong:["Manchester","Dublin","Edinburgh"]}
+      ]
+    },
+    medium: {
+      history: [
+        {q:"Which treaty officially ended World War I?", correct:"The Treaty of Versailles", wrong:["The Treaty of Paris","The Treaty of Ghent","The Congress of Vienna"]},
+        {q:"Who was queen of England when the Spanish Armada was defeated?", correct:"Elizabeth I", wrong:["Victoria","Mary I","Anne"]},
+        {q:"The Renaissance is generally said to have begun in which country?", correct:"Italy", wrong:["France","Germany","Spain"]},
+        {q:"Which dynasty built much of the Forbidden City?", correct:"The Ming Dynasty", wrong:["The Han Dynasty","The Qing Dynasty","The Tang Dynasty"]},
+        {q:"Who led India's independence movement through non-violent resistance?", correct:"Mahatma Gandhi", wrong:["Jawaharlal Nehru","Subhas Chandra Bose","Bhagat Singh"]},
+        {q:"In which year did the Berlin Wall fall?", correct:"1989", wrong:["1991","1985","1979"]},
+        {q:"Which battle marked Napoleon's final defeat?", correct:"The Battle of Waterloo", wrong:["The Battle of Trafalgar","The Battle of Leipzig","The Battle of Austerlitz"]},
+        {q:"In which year did the French Revolution begin?", correct:"1789", wrong:["1799","1776","1804"]},
+        {q:"Who was the first emperor to unify China?", correct:"Qin Shi Huang", wrong:["Kublai Khan","Sun Yat-sen","Han Wudi"]},
+        {q:"Which country was formerly known as Persia?", correct:"Iran", wrong:["Iraq","Turkey","Syria"]},
+        {q:"The Cold War was primarily a standoff between the USA and which country?", correct:"The Soviet Union", wrong:["China","North Korea","Cuba"]},
+        {q:"Who was the British Prime Minister for most of World War II?", correct:"Winston Churchill", wrong:["Neville Chamberlain","Clement Attlee","Anthony Eden"]}
+      ],
+      geography: [
+        {q:"Which country has the most natural lakes?", correct:"Canada", wrong:["Russia","Finland","Brazil"]},
+        {q:"The Amazon Rainforest lies mostly within which country?", correct:"Brazil", wrong:["Peru","Colombia","Venezuela"]},
+        {q:"Ethiopia was formerly known by which name?", correct:"Abyssinia", wrong:["Nubia","Numidia","Zanzibar"]},
+        {q:"What is the capital of Australia?", correct:"Canberra", wrong:["Sydney","Melbourne","Perth"]},
+        {q:"Which mountain range is considered a boundary between Europe and Asia?", correct:"The Ural Mountains", wrong:["The Caucasus","The Carpathians","The Alps"]},
+        {q:"The Panama Canal connects the Pacific Ocean to which other ocean?", correct:"The Atlantic Ocean", wrong:["The Indian Ocean","The Arctic Ocean","The Southern Ocean"]},
+        {q:"What is the capital of Canada?", correct:"Ottawa", wrong:["Toronto","Vancouver","Montreal"]},
+        {q:"Which sea is famous for being so salty that swimmers float easily?", correct:"The Dead Sea", wrong:["The Red Sea","The Caspian Sea","The Black Sea"]},
+        {q:"The Great Barrier Reef lies off the coast of which country?", correct:"Australia", wrong:["Indonesia","the Philippines","Thailand"]},
+        {q:"Which country spans both Europe and Asia across the Bosphorus?", correct:"Turkey", wrong:["Russia","Kazakhstan","Georgia"]},
+        {q:"What is the longest river in South America?", correct:"The Amazon", wrong:["The Orinoco","The Parana","The Magdalena"]},
+        {q:"Which African country is completely surrounded by South Africa?", correct:"Lesotho", wrong:["Eswatini","Botswana","Zimbabwe"]}
+      ]
+    },
+    hard: {
+      history: [
+        {q:"The Peace of Westphalia (1648) ended which major conflict?", correct:"The Thirty Years' War", wrong:["The Hundred Years' War","The War of Spanish Succession","The Eighty Years' War"]},
+        {q:"Who was the Byzantine emperor during the fall of Constantinople in 1453?", correct:"Constantine XI", wrong:["Justinian I","Basil II","Michael VIII"]},
+        {q:"The Sykes-Picot Agreement of 1916 divided which region into spheres of influence?", correct:"The Middle East", wrong:["Southeast Asia","North Africa","The Balkans"]},
+        {q:"Which battle in 1526 established Mughal rule in India?", correct:"The First Battle of Panipat", wrong:["The Battle of Plassey","The Battle of Haldighati","The Battle of Buxar"]},
+        {q:"The Meiji Restoration, which modernized the government, took place in which country?", correct:"Japan", wrong:["China","Korea","Thailand"]},
+        {q:"Whose assassination at Sarajevo in 1914 triggered the outbreak of World War I?", correct:"Archduke Franz Ferdinand", wrong:["Kaiser Wilhelm II","Tsar Nicholas II","King Alexander I"]},
+        {q:"The Treaty of Tordesillas (1494) divided newly found lands between which two countries?", correct:"Spain and Portugal", wrong:["France and England","Spain and France","Portugal and England"]},
+        {q:"The An Lushan Rebellion severely weakened which Chinese dynasty?", correct:"The Tang Dynasty", wrong:["The Song Dynasty","The Ming Dynasty","The Yuan Dynasty"]},
+        {q:"The Congress of Vienna in 1815 aimed to restore balance after whose defeat?", correct:"Napoleon", wrong:["Otto von Bismarck","Louis XVI","Charles V"]},
+        {q:"Who was the last reigning Tsar of Russia?", correct:"Nicholas II", wrong:["Alexander III","Peter the Great","Ivan the Terrible"]},
+        {q:"The Rosetta Stone was key to deciphering which ancient script?", correct:"Egyptian hieroglyphs", wrong:["Cuneiform","Linear B","Mayan glyphs"]},
+        {q:"Which empire's collapse in 1922 led to the founding of modern Turkey?", correct:"The Ottoman Empire", wrong:["The Austro-Hungarian Empire","The Persian Empire","The Mongol Empire"]}
+      ],
+      geography: [
+        {q:"Which strait separates Asia from North America?", correct:"The Bering Strait", wrong:["The Strait of Gibraltar","The Strait of Malacca","The Drake Passage"]},
+        {q:"What is the world's deepest known oceanic trench?", correct:"The Mariana Trench", wrong:["The Puerto Rico Trench","The Java Trench","The Tonga Trench"]},
+        {q:"Which country is considered doubly landlocked, bordered only by other landlocked countries?", correct:"Uzbekistan", wrong:["Mongolia","Bolivia","Zambia"]},
+        {q:"Which African lake is the largest by surface area?", correct:"Lake Victoria", wrong:["Lake Tanganyika","Lake Malawi","Lake Chad"]},
+        {q:"What is the capital of Kazakhstan?", correct:"Astana", wrong:["Almaty","Bishkek","Tashkent"]},
+        {q:"Which country has the greatest number of active volcanoes?", correct:"Indonesia", wrong:["Japan","The Philippines","Chile"]},
+        {q:"What is the name of the world's longest mountain range, most of which lies underwater?", correct:"The Mid-Atlantic Ridge", wrong:["The Andes","The Himalayas","The Great Dividing Range"]},
+        {q:"What is the largest hot desert in the world?", correct:"The Sahara", wrong:["The Gobi","The Arabian Desert","The Kalahari"]},
+        {q:"What is the capital of Switzerland?", correct:"Bern", wrong:["Zurich","Geneva","Lausanne"]},
+        {q:"Which river flows through the greatest number of countries?", correct:"The Danube", wrong:["The Nile","The Rhine","The Volga"]},
+        {q:"Which country contains the geographic point known as the 'Pole of Inaccessibility' in Antarctica research?", correct:"Antarctica has no country; it is governed by treaty", wrong:["Chile","Argentina","Australia"]},
+        {q:"Which landlocked sea is the largest inland body of water on Earth?", correct:"The Caspian Sea", wrong:["The Aral Sea","Lake Superior","The Dead Sea"]}
+      ]
+    }
+  };
+
+  /* ============ Math question generator (procedural, near-infinite variety) ============ */
+  function randInt(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i = a.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+  function numOptions(correct, spread, count){
+    const set = new Set([correct]);
+    let guard = 0;
+    while(set.size < count && guard < 200){
+      guard++;
+      let delta = randInt(-spread, spread);
+      if(delta === 0) delta = 1;
+      const cand = correct + delta;
+      if(!set.has(cand)) set.add(cand);
+    }
+    return shuffle([...set]).map(String);
+  }
+
+  function genMathEasy(){
+    const op = Math.random() < 0.5 ? '+' : '-';
+    let a = randInt(1, 20), b = randInt(1, 20);
+    if(op === '-' && b > a) [a, b] = [b, a];
+    const answer = op === '+' ? a + b : a - b;
+    return { q: `What is ${a} ${op} ${b}?`, correct: answer, spread: 6 };
+  }
+
+  function genMathMedium(){
+    const kind = randInt(0, 3);
+    if(kind === 0){
+      const a = randInt(10, 99), b = randInt(10, 99);
+      return { q: `What is ${a} + ${b}?`, correct: a + b, spread: 12 };
+    }
+    if(kind === 1){
+      let a = randInt(10, 99), b = randInt(10, 99);
+      if(b > a) [a, b] = [b, a];
+      return { q: `What is ${a} - ${b}?`, correct: a - b, spread: 12 };
+    }
+    if(kind === 2){
+      const a = randInt(2, 12), b = randInt(2, 12);
+      return { q: `What is ${a} × ${b}?`, correct: a * b, spread: 15 };
+    }
+    const b = randInt(2, 12), ans = randInt(2, 12);
+    const a = b * ans;
+    return { q: `What is ${a} ÷ ${b}?`, correct: ans, spread: 6 };
+  }
+
+  function genMathHard(){
+    const kind = randInt(0, 4);
+    if(kind === 0){
+      const p = [10, 15, 20, 25, 30, 40, 50, 60, 75][randInt(0, 8)];
+      const base = randInt(1, 10) * 20;
+      return { q: `What is ${p}% of ${base}?`, correct: (p * base) / 100, spread: 15 };
+    }
+    if(kind === 1){
+      const n = randInt(4, 25);
+      return { q: `What is ${n}²?`, correct: n * n, spread: 25 };
+    }
+    if(kind === 2){
+      const roots = [16, 25, 36, 49, 64, 81, 100, 121, 144, 169, 196, 225];
+      const n = roots[randInt(0, roots.length - 1)];
+      return { q: `What is the square root of ${n}?`, correct: Math.sqrt(n), spread: 4 };
+    }
+    if(kind === 3){
+      const a = randInt(2, 12), b = randInt(2, 12), c = randInt(1, 20);
+      const plus = Math.random() < 0.5;
+      const answer = plus ? a * b + c : a * b - c;
+      return { q: `What is (${a} × ${b}) ${plus ? '+' : '-'} ${c}?`, correct: answer, spread: 18 };
+    }
+    const a = randInt(11, 30), b = randInt(2, 12);
+    return { q: `What is ${a} × ${b}?`, correct: a * b, spread: 25 };
+  }
+
+  function generateMathQuestions(level, count){
+    const gen = level === 'easy' ? genMathEasy : level === 'medium' ? genMathMedium : genMathHard;
+    const seen = new Set();
+    const out = [];
+    let guard = 0;
+    while(out.length < count && guard < 500){
+      guard++;
+      const raw = gen();
+      const key = raw.q;
+      if(seen.has(key)) continue;
+      seen.add(key);
+      const options = numOptions(raw.correct, raw.spread, 4);
+      const correctIndex = options.indexOf(String(raw.correct));
+      out.push({
+        category: 'math',
+        prompt: raw.q,
+        options,
+        correctIndex
+      });
+    }
+    return out;
+  }
+
+  function pickFromBank(level, category, count){
+    const pool = shuffle(BANK[level][category]);
+    const picked = pool.slice(0, count);
+    return picked.map(item => {
+      const options = shuffle([item.correct, ...item.wrong]);
+      return {
+        category,
+        prompt: item.q,
+        options,
+        correctIndex: options.indexOf(item.correct)
+      };
+    });
+  }
+
+  const LEVELS = {
+    easy:   { label: 'Easy',   counts: { math: 3, history: 3, geography: 3 }, flag: 'I' },
+    medium: { label: 'Medium', counts: { math: 4, history: 4, geography: 4 }, flag: 'II' },
+    hard:   { label: 'Hard',   counts: { math: 5, history: 5, geography: 5 }, flag: 'III' }
+  };
+
+  function buildQuizSet(level){
+    const c = LEVELS[level].counts;
+    const set = [
+      ...generateMathQuestions(level, c.math),
+      ...pickFromBank(level, 'history', c.history),
+      ...pickFromBank(level, 'geography', c.geography)
+    ];
+    return shuffle(set);
+  }
+
+  /* ============ App state & rendering ============ */
+  const card = document.getElementById('card');
+
+  const state = {
+    level: null,
+    questions: [],
+    index: 0,
+    answers: [],   // {category, correct: bool}
+    startTime: 0,
+    timerInterval: null
+  };
+
+  function formatTime(ms){
+    const totalSec = Math.floor(ms / 1000);
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+
+  function renderStart(){
+    stopTimer();
+    card.innerHTML = `
+      <header class="top">
+        <div class="mark">⚡</div>
+        <h1>Brain Blitz</h1>
+        <p class="sub">A timed blitz of math, history, and geography checkpoints. Pick a difficulty — the set reshuffles every time, so you'll never get the same round twice.</p>
+      </header>
+      <main>
+        <div class="levels">
+          <button class="level-btn lvl-easy" data-level="easy">
+            <div class="level-flag">I</div>
+            <div>
+              <div class="level-name">Easy</div>
+              <div class="level-desc">9 checkpoints · gentle arithmetic and well-known facts</div>
+            </div>
+          </button>
+          <button class="level-btn lvl-medium" data-level="medium">
+            <div class="level-flag">II</div>
+            <div>
+              <div class="level-name">Medium</div>
+              <div class="level-desc">12 checkpoints · bigger numbers and lesser-known facts</div>
+            </div>
+          </button>
+          <button class="level-btn lvl-hard" data-level="hard">
+            <div class="level-flag">III</div>
+            <div>
+              <div class="level-name">Hard</div>
+              <div class="level-desc">15 checkpoints · multi-step math and deep-cut history &amp; geography</div>
+            </div>
+          </button>
+        </div>
+        <p class="footnote">Your stopwatch starts on the first checkpoint and stops on the last — see how fast you blitz through.</p>
+      </main>
+    `;
+    card.querySelectorAll('.level-btn').forEach(btn => {
+      btn.addEventListener('click', () => startQuiz(btn.dataset.level));
+    });
+  }
+
+  function startQuiz(level){
+    state.level = level;
+    state.questions = buildQuizSet(level);
+    state.index = 0;
+    state.answers = [];
+    state.startTime = Date.now();
+    startTimer();
+    renderQuestion();
+  }
+
+  function startTimer(){
+    stopTimer();
+    state.timerInterval = setInterval(() => {
+      const el = document.getElementById('sw-display');
+      if(el) el.textContent = formatTime(Date.now() - state.startTime);
+    }, 250);
+  }
+  function stopTimer(){
+    if(state.timerInterval){ clearInterval(state.timerInterval); state.timerInterval = null; }
+  }
+
+  const CATEGORY_LABEL = { math: 'Math', history: 'History', geography: 'Geography' };
+  const LETTERS = ['A','B','C','D'];
+
+  function renderQuestion(){
+    const total = state.questions.length;
+    const q = state.questions[state.index];
+    const elapsed = Date.now() - state.startTime;
+
+    const trailHtml = state.questions.map((_, i) => {
+      let cls = 'stop';
+      if(i === state.index) cls += ' current';
+      else if(state.answers[i]){ cls += state.answers[i].correct ? ' correct' : ' wrong'; }
+      return `<div class="${cls}">${i + 1}</div>`;
+    }).join('');
+
+    card.innerHTML = `
+      <main>
+        <div class="quiz-head">
+          <div class="stopwatch"><span class="dot"></span><span id="sw-display">${formatTime(elapsed)}</span></div>
+          <span class="category-tag tag-${q.category}">${CATEGORY_LABEL[q.category]}</span>
+        </div>
+        <div class="trail">${trailHtml}</div>
+        <div class="q-count">Checkpoint ${state.index + 1} of ${total} · ${LEVELS[state.level].label}</div>
+        <div class="question fade-in">${q.prompt}</div>
+        <div class="options" id="options">
+          ${q.options.map((opt, i) => `
+            <button class="opt" data-index="${i}">
+              <span class="opt-letter">${LETTERS[i]}</span><span>${opt}</span>
+            </button>
+          `).join('')}
+        </div>
+        <div class="next-row" id="next-row"></div>
+      </main>
+    `;
+
+    card.querySelectorAll('.opt').forEach(btn => {
+      btn.addEventListener('click', () => selectAnswer(parseInt(btn.dataset.index, 10)));
+    });
+  }
+
+  function selectAnswer(chosenIndex){
+    const q = state.questions[state.index];
+    const isCorrect = chosenIndex === q.correctIndex;
+    state.answers[state.index] = { category: q.category, correct: isCorrect };
+
+    card.querySelectorAll('.opt').forEach((btn, i) => {
+      btn.disabled = true;
+      if(i === q.correctIndex) btn.classList.add('correct');
+      else if(i === chosenIndex) btn.classList.add('wrong');
+      else btn.classList.add('dim');
+    });
+
+    const isLast = state.index === state.questions.length - 1;
+    const nextRow = document.getElementById('next-row');
+    nextRow.innerHTML = `<button class="btn" id="next-btn">${isLast ? 'See results' : 'Next checkpoint'}</button>`;
+    document.getElementById('next-btn').addEventListener('click', () => {
+      if(isLast){ finishQuiz(); }
+      else { state.index++; renderQuestion(); }
+    });
+  }
+
+  function finishQuiz(){
+    stopTimer();
+    const totalTime = Date.now() - state.startTime;
+    const total = state.questions.length;
+    const correctCount = state.answers.filter(a => a && a.correct).length;
+    const accuracy = Math.round((correctCount / total) * 100);
+
+    const byCategory = { math: {correct:0,total:0}, history: {correct:0,total:0}, geography: {correct:0,total:0} };
+    state.answers.forEach(a => {
+      if(!a) return;
+      byCategory[a.category].total++;
+      if(a.correct) byCategory[a.category].correct++;
+    });
+
+    card.innerHTML = `
+      <header class="top">
+        <div class="mark">🏁</div>
+        <h1>Blitz complete</h1>
+        <p class="sub">Here's how your ${LEVELS[state.level].label.toLowerCase()} round went.</p>
+      </header>
+      <main>
+        <div class="result-hero fade-in">
+          <div class="result-score">${correctCount}<span style="font-size:0.5em; color:var(--ink-soft);"> / ${total}</span></div>
+          <div class="result-label">checkpoints answered correctly</div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat"><div class="stat-value">${formatTime(totalTime)}</div><div class="stat-key">Time taken</div></div>
+          <div class="stat"><div class="stat-value">${total}</div><div class="stat-key">Questions</div></div>
+          <div class="stat"><div class="stat-value">${accuracy}%</div><div class="stat-key">Accuracy</div></div>
+        </div>
+        <div class="breakdown">
+          <h3>By subject</h3>
+          ${['math','history','geography'].map(cat => {
+            const b = byCategory[cat];
+            const pct = b.total ? (b.correct / b.total) * 100 : 0;
+            return `
+              <div class="bd-row">
+                <div class="bd-name">${CATEGORY_LABEL[cat]}</div>
+                <div class="bd-bar-track"><div class="bd-bar-fill bd-fill-${cat}" style="width:${pct}%"></div></div>
+                <div class="bd-frac">${b.correct}/${b.total}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+        <div class="result-actions">
+          <button class="btn ghost" id="change-level">Change level</button>
+          <button class="btn" id="play-again">Blitz again</button>
+        </div>
+      </main>
+    `;
+
+    document.getElementById('play-again').addEventListener('click', () => startQuiz(state.level));
+    document.getElementById('change-level').addEventListener('click', renderStart);
+  }
+
+  renderStart();
+})();
+</script>
+</body>
+</html>
